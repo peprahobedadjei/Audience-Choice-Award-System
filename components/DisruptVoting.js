@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import React, { useState } from "react";
 import {
   motion,
@@ -197,7 +198,7 @@ export default function DisruptVoting() {
                 <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-cyan-400 font-bold">1</span>
                 </div>
-                <p>Swipe through each founder's card</p>
+                <p>Swipe through each founder&apos;s card</p>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
