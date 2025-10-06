@@ -54,7 +54,7 @@ export default function DisruptLanding() {
       </div>
 
       {/* Main Content Container */}
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-between px-6 py-8">
+      <div className="relative z-10 flex min-h-screen flex-col items-center space-y-16 px-6 py-8">
         {/* Top Section - Logos */}
         <motion.div
           className="w-full flex flex-col items-center space-y-4"
