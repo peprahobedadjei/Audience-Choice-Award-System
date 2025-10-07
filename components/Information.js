@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, TrendingUp, DollarSign, ArrowRight, Sparkles } from "lucide-react";
+import { Zap, TrendingUp, DollarSign, ArrowRight, Sparkles,Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 

@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { Calendar, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, Zap, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 
@@ -152,9 +152,9 @@ export default function DisruptLanding() {
         >
           <motion.button
             onClick={handleStart}
-            className="w-full bg-white py-4 rounded-2xl text-2xl font-light tracking-widest shadow-2xl relative overflow-hidden"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className="w-full bg-white py-6 rounded-2xl text-2xl font-light tracking-widest shadow-2xl relative overflow-hidden"
+            whileHover={{ scale: isStarting ? 1 : 1.02 }}
+            whileTap={{ scale: isStarting ? 1 : 0.98 }}
             disabled={isStarting}
           >
             {/* Button Glow Effect */}
@@ -163,12 +163,44 @@ export default function DisruptLanding() {
               whileHover={{ opacity: 0.1 }}
             />
 
-            <span className="relative z-10 flex items-center justify-center space-x-3">
-              <Zap className="w-6 h-6 text-purple-600" />
-              <span className=" text-sm bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold">
-                GET STARTED
-              </span>
-            </span>
+            <AnimatePresence mode="wait">
+              {isStarting ? (
+                <motion.span
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="relative z-10 flex items-center justify-center space-x-3"
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <Loader2 className="w-6 h-6 text-purple-600" />
+                  </motion.div>
+                  <span className="bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold">
+                    LOADING...
+                  </span>
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="default"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="relative z-10 flex items-center justify-center space-x-3"
+                >
+                  <Zap className="w-6 h-6 text-purple-600" />
+                  <span className="bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold">
+                    START VOTING
+                  </span>
+                </motion.span>
+              )}
+            </AnimatePresence>
           </motion.button>
 
           {/* Subtitle */}
