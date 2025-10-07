@@ -3,16 +3,17 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Zap } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/router";
 
 export default function DisruptLanding() {
   const [isStarting, setIsStarting] = useState(false);
 
+  const router = useRouter();
+
   const handleStart = () => {
     setIsStarting(true);
-    // Navigate to voting page after animation
     setTimeout(() => {
-      // This would be router.push('/vote') in actual Next.js
-      alert("Navigating to voting page...");
+      router.push("/cast-your-vote-info");
     }, 800);
   };
 
@@ -165,7 +166,7 @@ export default function DisruptLanding() {
             <span className="relative z-10 flex items-center justify-center space-x-3">
               <Zap className="w-6 h-6 text-purple-600" />
               <span className=" text-sm bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold">
-                GET STARTED 
+                GET STARTED
               </span>
             </span>
           </motion.button>
