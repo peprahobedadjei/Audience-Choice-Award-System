@@ -1,14 +1,14 @@
 /* eslint-disable react/no-unescaped-entities */
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ArrowRight, 
-  ArrowLeft, 
-  Check, 
-  TrendingUp, 
+import {
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  TrendingUp,
   Sparkles,
   Award,
-  DollarSign
+  DollarSign,
 } from "lucide-react";
 
 // Dummy founders data
@@ -19,8 +19,9 @@ const founders = [
     company: "Biota",
     logo: "/logo1.webp",
     profile: "/founder1.webp",
-    description: "Biota's Tech replaces need for an ecologist on site, collecting primary data, and drafting a report. Helping large corporations manage and track land bank environmental impact. 7x Faster & 8x Cheaper than traditional methods.",
-    color: "from-green-400 to-emerald-600"
+    description:
+      "Biota's Tech replaces need for an ecologist on site, collecting primary data, and drafting a report. Helping large corporations manage and track land bank environmental impact. 7x Faster & 8x Cheaper than traditional methods.",
+    color: "from-green-400 to-emerald-600",
   },
   {
     id: 2,
@@ -28,8 +29,9 @@ const founders = [
     company: "AquaTech",
     logo: "💧",
     profile: "/user.png",
-    description: "Revolutionary water purification system using AI-powered sensors. Making clean water accessible to remote communities. Reduces costs by 60% while improving water quality monitoring in real-time.",
-    color: "from-blue-400 to-cyan-600"
+    description:
+      "Revolutionary water purification system using AI-powered sensors. Making clean water accessible to remote communities. Reduces costs by 60% while improving water quality monitoring in real-time.",
+    color: "from-blue-400 to-cyan-600",
   },
   {
     id: 3,
@@ -37,8 +39,9 @@ const founders = [
     company: "CarbonZero",
     logo: "🌍",
     profile: "/user.png",
-    description: "AI-driven carbon footprint tracking for SMEs. Automated ESG reporting that saves companies 40+ hours per month. Making sustainability compliance simple and affordable for Irish businesses.",
-    color: "from-purple-400 to-indigo-600"
+    description:
+      "AI-driven carbon footprint tracking for SMEs. Automated ESG reporting that saves companies 40+ hours per month. Making sustainability compliance simple and affordable for Irish businesses.",
+    color: "from-purple-400 to-indigo-600",
   },
   {
     id: 4,
@@ -46,8 +49,9 @@ const founders = [
     company: "MedLink",
     logo: "🏥",
     profile: "/user.png",
-    description: "Connecting rural areas to specialist doctors via telemedicine. AI-assisted diagnosis reduces wait times by 70%. Bringing world-class healthcare to underserved communities across Ireland.",
-    color: "from-pink-400 to-rose-600"
+    description:
+      "Connecting rural areas to specialist doctors via telemedicine. AI-assisted diagnosis reduces wait times by 70%. Bringing world-class healthcare to underserved communities across Ireland.",
+    color: "from-pink-400 to-rose-600",
   },
   {
     id: 5,
@@ -55,20 +59,37 @@ const founders = [
     company: "FoodFlow",
     logo: "🍃",
     profile: "/user.png",
-    description: "Reducing food waste through smart inventory management. Helping restaurants cut waste by 45% while increasing profits. AI predicts demand patterns to optimize ordering and reduce spoilage.",
-    color: "from-orange-400 to-amber-600"
-  }
+    description:
+      "Reducing food waste through smart inventory management. Helping restaurants cut waste by 45% while increasing profits. AI predicts demand patterns to optimize ordering and reduce spoilage.",
+    color: "from-orange-400 to-amber-600",
+  },
 ];
 
 // Generate random investor name
 const generateInvestorName = () => {
-  const adjectives = ["Visionary", "Bold", "Strategic", "Savvy", "Dynamic", "Innovative", "Future", "Rising"];
-  const nouns = ["Investor", "Backer", "Angel", "Patron", "Supporter", "Pioneer"];
+  const adjectives = [
+    "Visionary",
+    "Bold",
+    "Strategic",
+    "Savvy",
+    "Dynamic",
+    "Innovative",
+    "Future",
+    "Rising",
+  ];
+  const nouns = [
+    "Investor",
+    "Backer",
+    "Angel",
+    "Patron",
+    "Supporter",
+    "Pioneer",
+  ];
   const numbers = Math.floor(Math.random() * 999) + 100;
-  
+
   const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
   const noun = nouns[Math.floor(Math.random() * nouns.length)];
-  
+
   return `${adj}${noun}${numbers}`;
 };
 
@@ -84,7 +105,10 @@ export default function VotingPage() {
     setInvestorName(generateInvestorName());
   }, []);
 
-  const allocatedAmount = Object.values(allocations).reduce((sum, val) => sum + (val || 0), 0);
+  const allocatedAmount = Object.values(allocations).reduce(
+    (sum, val) => sum + (val || 0),
+    0
+  );
   const remainingBudget = totalBudget - allocatedAmount;
 
   const currentFounder = founders[currentIndex];
@@ -95,25 +119,25 @@ export default function VotingPage() {
     const otherAllocations = Object.entries(allocations)
       .filter(([id]) => parseInt(id) !== currentFounder.id)
       .reduce((sum, [, val]) => sum + val, 0);
-    
+
     const maxAllowable = totalBudget - otherAllocations;
     const finalValue = Math.min(Math.max(0, numValue), maxAllowable);
-    
-    setAllocations(prev => ({
+
+    setAllocations((prev) => ({
       ...prev,
-      [currentFounder.id]: finalValue
+      [currentFounder.id]: finalValue,
     }));
   };
 
   const handleNext = () => {
     if (currentIndex < founders.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex((prev) => prev + 1);
     }
   };
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
+      setCurrentIndex((prev) => prev - 1);
     }
   };
 
@@ -121,7 +145,9 @@ export default function VotingPage() {
     if (allocatedAmount === totalBudget) {
       setShowThankYou(true);
     } else {
-      alert(`Please allocate all €${totalBudget.toLocaleString()}! You have €${remainingBudget.toLocaleString()} remaining.`);
+      alert(
+        `Please allocate all €${totalBudget.toLocaleString()}! You have €${remainingBudget.toLocaleString()} remaining.`
+      );
     }
   };
 
@@ -130,7 +156,13 @@ export default function VotingPage() {
   };
 
   if (showThankYou) {
-    return <ThankYouPage allocations={allocations} founders={founders} investorName={investorName} />;
+    return (
+      <ThankYouPage
+        allocations={allocations}
+        founders={founders}
+        investorName={investorName}
+      />
+    );
   }
 
   return (
@@ -143,7 +175,8 @@ export default function VotingPage() {
           font-style: normal;
         }
         * {
-          font-family: "Squartiqa", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-family: "Squartiqa", -apple-system, BlinkMacSystemFont,
+            "Segoe UI", sans-serif;
         }
       `}</style>
 
@@ -151,22 +184,29 @@ export default function VotingPage() {
       <div className="relative z-20 bg-black/30 backdrop-blur-md border-b border-white/10 px-6 py-4">
         <div className="flex justify-between items-center mb-3">
           <div className="text-white/60 text-sm">Investor</div>
-          <div className="text-cyan-400 font-semibold text-sm">{investorName}</div>
+          <div className="text-cyan-400 font-semibold text-sm">
+            {investorName}
+          </div>
         </div>
-        
+
         <div className="flex justify-between items-center">
           <div>
             <div className="text-white/60 text-xs mb-1">Remaining Budget</div>
-            <motion.div 
+            <motion.div
               className="text-2xl font-light text-white"
               animate={{
-                color: remainingBudget < 10000 ? "#f87171" : remainingBudget < 25000 ? "#fbbf24" : "#ffffff"
+                color:
+                  remainingBudget < 10000
+                    ? "#f87171"
+                    : remainingBudget < 25000
+                    ? "#fbbf24"
+                    : "#ffffff",
               }}
             >
               €{remainingBudget.toLocaleString()}
             </motion.div>
           </div>
-          
+
           <div className="text-right">
             <div className="text-white/60 text-xs mb-1">Allocated</div>
             <div className="text-2xl font-light text-cyan-400">
@@ -202,9 +242,9 @@ export default function VotingPage() {
               {/* Profile Photo */}
               <div className="flex justify-center mb-4">
                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 shadow-xl">
-                  {currentFounder.profile.startsWith('/') ? (
-                    <img 
-                      src={currentFounder.profile} 
+                  {currentFounder.profile.startsWith("/") ? (
+                    <img
+                      src={currentFounder.profile}
                       alt={currentFounder.name}
                       className="w-full h-full object-cover"
                     />
@@ -216,10 +256,16 @@ export default function VotingPage() {
 
               <div className="flex items-start space-x-4 mb-4">
                 {/* Logo */}
-                <div className={`w-16 h-16 rounded-2xl ${currentFounder.logo.startsWith('/') ? 'bg-white p-2' : `bg-gradient-to-br ${currentFounder.color}`} flex items-center justify-center shadow-lg flex-shrink-0`}>
-                  {currentFounder.logo.startsWith('/') ? (
-                    <img 
-                      src={currentFounder.logo} 
+                <div
+                  className={`w-16 h-16 rounded-2xl ${
+                    currentFounder.logo.startsWith("/")
+                      ? "bg-white p-2"
+                      : `bg-gradient-to-br ${currentFounder.color}`
+                  } flex items-center justify-center shadow-lg flex-shrink-0`}
+                >
+                  {currentFounder.logo.startsWith("/") ? (
+                    <img
+                      src={currentFounder.logo}
                       alt={`${currentFounder.company} logo`}
                       className="w-full h-full object-contain"
                     />
@@ -227,11 +273,19 @@ export default function VotingPage() {
                     <span className="text-3xl">{currentFounder.logo}</span>
                   )}
                 </div>
-                
+
                 {/* Name & Company */}
                 <div className="flex-grow">
-                  <h2 className="text-white text-2xl font-light mb-1">{currentFounder.name}</h2>
-                  <div className={`inline-block px-3 py-1 rounded-full ${currentFounder.logo.startsWith('/') ? 'bg-green-500' : `bg-gradient-to-r ${currentFounder.color}`} text-white text-sm`}>
+                  <h2 className="text-white text-2xl font-light mb-1">
+                    {currentFounder.name}
+                  </h2>
+                  <div
+                    className={`inline-block px-3 py-1 rounded-full ${
+                      currentFounder.logo.startsWith("/")
+                        ? "bg-green-500"
+                        : `bg-gradient-to-r ${currentFounder.color}`
+                    } text-white text-sm`}
+                  >
                     {currentFounder.company}
                   </div>
                 </div>
@@ -245,14 +299,18 @@ export default function VotingPage() {
 
             {/* Investment Input */}
             <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-3xl p-6 border border-white/20 shadow-2xl mb-4">
-              <label className="text-white/60 text-sm mb-3 block">Your Investment Amount</label>
-              
+              <label className="text-white/60 text-sm mb-3 block">
+                Your Investment Amount
+              </label>
+
               <div className="flex items-center space-x-3 mb-4">
                 <div className="flex-grow relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-xl">€</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-xl">
+                    €
+                  </span>
                   <input
                     type="number"
-                    value={currentAllocation || ''}
+                    value={currentAllocation || ""}
                     onChange={(e) => handleAllocationChange(e.target.value)}
                     placeholder="0"
                     className="w-full bg-white/10 text-white text-2xl font-light pl-10 pr-4 py-4 rounded-xl border border-white/20 focus:border-cyan-400 focus:outline-none transition-all"
@@ -271,13 +329,23 @@ export default function VotingPage() {
                     disabled={remainingBudget + currentAllocation < amount}
                     className={`py-2 rounded-lg text-sm ${
                       remainingBudget + currentAllocation >= amount
-                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50'
-                        : 'bg-white/5 text-white/30 border border-white/10'
+                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50"
+                        : "bg-white/5 text-white/30 border border-white/10"
                     }`}
-                    whileHover={{ scale: remainingBudget + currentAllocation >= amount ? 1.05 : 1 }}
-                    whileTap={{ scale: remainingBudget + currentAllocation >= amount ? 0.95 : 1 }}
+                    whileHover={{
+                      scale:
+                        remainingBudget + currentAllocation >= amount
+                          ? 1.05
+                          : 1,
+                    }}
+                    whileTap={{
+                      scale:
+                        remainingBudget + currentAllocation >= amount
+                          ? 0.95
+                          : 1,
+                    }}
                   >
-                    +€{(amount / 1000)}k
+                    +€{amount / 1000}k
                   </motion.button>
                 ))}
               </div>
@@ -291,11 +359,11 @@ export default function VotingPage() {
             <motion.div
               key={founder.id}
               className={`h-2 rounded-full transition-all ${
-                idx === currentIndex 
-                  ? 'w-8 bg-gradient-to-r from-cyan-400 to-pink-500' 
+                idx === currentIndex
+                  ? "w-8 bg-gradient-to-r from-cyan-400 to-pink-500"
                   : allocations[founder.id] > 0
-                  ? 'w-2 bg-green-400'
-                  : 'w-2 bg-white/20'
+                  ? "w-2 bg-green-400"
+                  : "w-2 bg-white/20"
               }`}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -311,8 +379,8 @@ export default function VotingPage() {
             disabled={currentIndex === 0}
             className={`flex-1 py-4 rounded-xl flex items-center justify-center space-x-2 ${
               currentIndex === 0
-                ? 'bg-white/5 text-white/30'
-                : 'bg-white/10 text-white border border-white/20'
+                ? "bg-white/5 text-white/30"
+                : "bg-white/10 text-white border border-white/20"
             }`}
             whileHover={{ scale: currentIndex > 0 ? 1.02 : 1 }}
             whileTap={{ scale: currentIndex > 0 ? 0.98 : 1 }}
@@ -337,8 +405,8 @@ export default function VotingPage() {
               disabled={allocatedAmount !== totalBudget}
               className={`flex-1 py-4 rounded-xl flex items-center justify-center space-x-2 ${
                 allocatedAmount === totalBudget
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
-                  : 'bg-white/10 text-white/40 border border-white/20'
+                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+                  : "bg-white/10 text-white/40 border border-white/20"
               }`}
               whileHover={{ scale: allocatedAmount === totalBudget ? 1.02 : 1 }}
               whileTap={{ scale: allocatedAmount === totalBudget ? 0.98 : 1 }}
@@ -356,11 +424,11 @@ export default function VotingPage() {
 // Thank You Page Component
 function ThankYouPage({ allocations, founders, investorName }) {
   const sortedAllocations = founders
-    .map(founder => ({
+    .map((founder) => ({
       ...founder,
-      amount: allocations[founder.id] || 0
+      amount: allocations[founder.id] || 0,
     }))
-    .filter(f => f.amount > 0)
+    .filter((f) => f.amount > 0)
     .sort((a, b) => b.amount - a.amount);
 
   return (
@@ -373,7 +441,8 @@ function ThankYouPage({ allocations, founders, investorName }) {
           font-style: normal;
         }
         * {
-          font-family: "Squartiqa", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-family: "Squartiqa", -apple-system, BlinkMacSystemFont,
+            "Segoe UI", sans-serif;
         }
       `}</style>
 
@@ -383,19 +452,19 @@ function ThankYouPage({ allocations, founders, investorName }) {
           key={i}
           className="absolute w-3 h-3 rounded-full"
           style={{
-            background: ['#06b6d4', '#a855f7', '#ec4899', '#f59e0b'][i % 4],
+            background: ["#06b6d4", "#a855f7", "#ec4899", "#f59e0b"][i % 4],
             left: `${Math.random() * 100}%`,
-            top: -20
+            top: -20,
           }}
           animate={{
-            y: ['0vh', '100vh'],
+            y: ["0vh", "100vh"],
             rotate: [0, 360],
-            opacity: [1, 0]
+            opacity: [1, 0],
           }}
           transition={{
             duration: 2 + Math.random() * 2,
             delay: Math.random() * 2,
-            repeat: Infinity
+            repeat: Infinity,
           }}
         />
       ))}
@@ -452,8 +521,18 @@ function ThankYouPage({ allocations, founders, investorName }) {
                 className="flex items-center justify-between py-3 border-b border-white/10 last:border-0"
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${founder.color} flex items-center justify-center text-lg`}>
-                    {founder.logo}
+                  <div
+                    className={`w-10 h-10 rounded-lg bg-gradient-to-br ${founder.color} flex items-center justify-center text-lg`}
+                  >
+                    {founder.logo.startsWith("/") ? (
+                      <img
+                        src={founder.logo}
+                        alt={`${founder.company} logo`}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-3xl">{founder.logo}</span>
+                    )}
                   </div>
                   <div>
                     <div className="text-white text-sm">{founder.company}</div>
@@ -476,10 +555,10 @@ function ThankYouPage({ allocations, founders, investorName }) {
           className="text-center"
         >
           <p className="text-white/60 text-sm mb-4">
-            Results will be announced at the end of the event
+            Final results will be seen on the LeadBoard
           </p>
           <motion.button
-            onClick={() => window.location.href = '/'}
+            onClick={() => (window.location.href = "/")}
             className="text-cyan-400 text-sm underline"
             whileHover={{ scale: 1.05 }}
           >

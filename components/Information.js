@@ -8,6 +8,7 @@ export default function DisruptInfoPage() {
   const [budget, setBudget] = useState(0);
   const targetBudget = 50000;
   const router = useRouter();
+    const [isStarting, setIsStarting] = useState(false);
 
   // Animate budget counter on mount
   useEffect(() => {
@@ -29,6 +30,7 @@ export default function DisruptInfoPage() {
   }, []);
 
   const handleStartInvesting = () => {
+      setIsStarting(true);
         setTimeout(() => {
       router.push("/audience-choice-award");
     }, 800);
@@ -246,7 +248,38 @@ export default function DisruptInfoPage() {
               }}
             />
             
-            <span className="relative z-10 flex items-center justify-center space-x-3">
+            <AnimatePresence mode="wait">
+              {isStarting ? (
+                <motion.span
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="relative z-10 flex items-center justify-center space-x-3"
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <Loader2 className="w-6 h-6 text-purple-600" />
+                  </motion.div>
+                  <span className="bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold">
+                    LOADING...
+                  </span>
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="default"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="relative z-10 flex items-center justify-center space-x-3"
+                >
+           <span className="relative z-10 flex items-center justify-center space-x-3">
               <span className="text-white text-xl font-light tracking-widest">
                 START INVESTING
               </span>
@@ -261,6 +294,9 @@ export default function DisruptInfoPage() {
                 <ArrowRight className="w-6 h-6 text-white" />
               </motion.div>
             </span>
+                </motion.span>
+              )}
+            </AnimatePresence>
           </motion.button>
 
           <motion.p
@@ -269,7 +305,7 @@ export default function DisruptInfoPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 1.4 }}
           >
-            May the best founder win!
+            May the best startup win! 🚀
           </motion.p>
         </motion.div>
 
