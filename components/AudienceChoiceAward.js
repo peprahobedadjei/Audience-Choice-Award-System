@@ -92,20 +92,25 @@ export default function VotingPage() {
     ? allocations[currentFounder.id] || 0
     : 0;
 
-  const handleAllocationChange = (value) => {
-    const numValue = parseInt(value) || 0;
-    const otherAllocations = Object.entries(allocations)
-      .filter(([id]) => parseInt(id) !== currentFounder.id)
-      .reduce((sum, [, val]) => sum + val, 0);
+const handleAllocationChange = (value) => {
+  const numValue = parseInt(value) || 0;
+  
+  // Calculate allocations for OTHER founders (exclude current)
+  const otherAllocations = Object.entries(allocations)
+    .filter(([id]) => id !== currentFounder.id)  // String comparison
+    .reduce((sum, [, val]) => sum + val, 0);
 
-    const maxAllowable = totalBudget - otherAllocations;
-    const finalValue = Math.min(Math.max(0, numValue), maxAllowable);
+  // Maximum we can allocate to current founder
+  const maxAllowable = totalBudget - otherAllocations;
+  
+  // Clamp value between 0 and maxAllowable
+  const finalValue = Math.min(Math.max(0, numValue), maxAllowable);
 
-    setAllocations((prev) => ({
-      ...prev,
-      [currentFounder.id]: finalValue,
-    }));
-  };
+  setAllocations((prev) => ({
+    ...prev,
+    [currentFounder.id]: finalValue,
+  }));
+};
 
   const handleNext = () => {
     if (currentIndex < founders.length - 1) {
