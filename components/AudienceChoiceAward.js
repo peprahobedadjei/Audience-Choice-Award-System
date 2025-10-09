@@ -11,60 +11,6 @@ import {
   DollarSign,
 } from "lucide-react";
 
-// Dummy founders data
-const founders = [
-  {
-    id: 1,
-    name: "Biota Founder",
-    company: "Biota",
-    logo: "/logo1.webp",
-    profile: "/founder1.webp",
-    description:
-      "Biota's Tech replaces need for an ecologist on site, collecting primary data, and drafting a report. Helping large corporations manage and track land bank environmental impact. 7x Faster & 8x Cheaper than traditional methods.",
-    color: "from-green-400 to-emerald-600",
-  },
-  {
-    id: 2,
-    name: "Marcus Chen",
-    company: "AquaTech",
-    logo: "💧",
-    profile: "/user.png",
-    description:
-      "Revolutionary water purification system using AI-powered sensors. Making clean water accessible to remote communities. Reduces costs by 60% while improving water quality monitoring in real-time.",
-    color: "from-blue-400 to-cyan-600",
-  },
-  {
-    id: 3,
-    name: "Aoife Murphy",
-    company: "CarbonZero",
-    logo: "🌍",
-    profile: "/user.png",
-    description:
-      "AI-driven carbon footprint tracking for SMEs. Automated ESG reporting that saves companies 40+ hours per month. Making sustainability compliance simple and affordable for Irish businesses.",
-    color: "from-purple-400 to-indigo-600",
-  },
-  {
-    id: 4,
-    name: "David Okafor",
-    company: "MedLink",
-    logo: "🏥",
-    profile: "/user.png",
-    description:
-      "Connecting rural areas to specialist doctors via telemedicine. AI-assisted diagnosis reduces wait times by 70%. Bringing world-class healthcare to underserved communities across Ireland.",
-    color: "from-pink-400 to-rose-600",
-  },
-  {
-    id: 5,
-    name: "Emma Larsson",
-    company: "FoodFlow",
-    logo: "🍃",
-    profile: "/user.png",
-    description:
-      "Reducing food waste through smart inventory management. Helping restaurants cut waste by 45% while increasing profits. AI predicts demand patterns to optimize ordering and reduce spoilage.",
-    color: "from-orange-400 to-amber-600",
-  },
-];
-
 // Generate random investor name
 const generateInvestorName = () => {
   const adjectives = [
@@ -94,11 +40,41 @@ const generateInvestorName = () => {
 };
 
 export default function VotingPage() {
+  const API_URL = "https://audience-choice-award-backend.vercel.app";
+
+  // Add founders state
+  const [founders, setFounders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [allocations, setAllocations] = useState({});
   const [investorName, setInvestorName] = useState("");
   const [showThankYou, setShowThankYou] = useState(false);
   const totalBudget = 50000;
+
+  useEffect(() => {
+    fetchFounders();
+  }, []);
+
+  const fetchFounders = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/api/founders`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch founders");
+      }
+
+      const data = await response.json();
+      console.log(data);
+      setFounders(data);
+    } catch (error) {
+      console.error("Error fetching founders:", error);
+      alert("Failed to load founders from database");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Generate investor name only on client side to avoid hydration mismatch
   useEffect(() => {
@@ -112,7 +88,9 @@ export default function VotingPage() {
   const remainingBudget = totalBudget - allocatedAmount;
 
   const currentFounder = founders[currentIndex];
-  const currentAllocation = allocations[currentFounder.id] || 0;
+  const currentAllocation = currentFounder
+    ? allocations[currentFounder.id] || 0
+    : 0;
 
   const handleAllocationChange = (value) => {
     const numValue = parseInt(value) || 0;
@@ -141,15 +119,53 @@ export default function VotingPage() {
     }
   };
 
-  const handleSubmit = () => {
-    if (allocatedAmount === totalBudget) {
-      setShowThankYou(true);
-    } else {
-      alert(
-        `Please allocate all €${totalBudget.toLocaleString()}! You have €${remainingBudget.toLocaleString()} remaining.`
-      );
+const handleSubmit = async () => {
+  if (allocatedAmount !== totalBudget) {
+    alert(
+      `Please allocate all €${totalBudget.toLocaleString()}! You have €${remainingBudget.toLocaleString()} remaining.`
+    );
+    return;
+  }
+
+  // Get access code from localStorage
+  const accessCode = localStorage.getItem('access_code');
+  
+  if (!accessCode) {
+    alert('No access code found. Please scan a valid QR code.');
+    window.location.href = '/';
+    return;
+  }
+
+  try {
+    // Submit vote to API
+    const response = await fetch(`${API_URL}/api/submit-vote`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        accessCode: accessCode,
+        investorName: investorName,
+        allocations: allocations,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to submit vote');
     }
-  };
+
+    // Clear access code from localStorage
+    localStorage.removeItem('access_code');
+
+    // Show thank you page
+    setShowThankYou(true);
+
+  } catch (error) {
+    console.error('Error submitting vote:', error);
+    alert(error.message || 'Failed to submit vote. Please try again.');
+  }
+};
 
   const quickAllocate = (amount) => {
     handleAllocationChange(currentAllocation + amount);
@@ -162,6 +178,28 @@ export default function VotingPage() {
         founders={founders}
         investorName={investorName}
       />
+    );
+  }
+  // Show loading state while fetching founders
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-2xl">Loading founders...</div>
+      </div>
+    );
+  }
+
+  // Show message if no founders available
+  if (founders.length === 0) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <p className="text-2xl mb-2">No founders available</p>
+          <p className="text-white/60">
+            Please add founders in the admin panel
+          </p>
+        </div>
+      </div>
     );
   }
 
@@ -242,9 +280,13 @@ export default function VotingPage() {
               {/* Profile Photo */}
               <div className="flex justify-center mb-4">
                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 shadow-xl">
-                  {currentFounder.profile.startsWith("/") ? (
+                  {currentFounder.profile ? (
                     <img
-                      src={currentFounder.profile}
+                      src={
+                        currentFounder.profile.startsWith("http")
+                          ? currentFounder.profile
+                          : `${API_URL}${currentFounder.profile}`
+                      }
                       alt={currentFounder.name}
                       className="w-full h-full object-cover"
                     />
@@ -259,15 +301,19 @@ export default function VotingPage() {
                 <div
                   className={`w-16 h-16 rounded-2xl ${
                     currentFounder.logo.startsWith("/")
-                      ? "bg-white p-2"
+                      ? "bg-white"
                       : `bg-gradient-to-br ${currentFounder.color}`
                   } flex items-center justify-center shadow-lg flex-shrink-0`}
                 >
-                  {currentFounder.logo.startsWith("/") ? (
+                  {currentFounder.logo ? (
                     <img
-                      src={currentFounder.logo}
-                      alt={`${currentFounder.company} logo`}
-                      className="w-full h-full object-contain"
+                      src={
+                        currentFounder.logo.startsWith("http")
+                          ? currentFounder.logo
+                          : `${API_URL}${currentFounder.logo}`
+                      }
+                      alt={currentFounder.name}
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <span className="text-3xl">{currentFounder.logo}</span>
@@ -524,15 +570,19 @@ function ThankYouPage({ allocations, founders, investorName }) {
                   <div
                     className={`w-10 h-10 rounded-lg bg-gradient-to-br ${founder.color} flex items-center justify-center text-lg`}
                   >
-                    {founder.logo.startsWith("/") ? (
-                      <img
-                        src={founder.logo}
-                        alt={`${founder.company} logo`}
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <span className="text-3xl">{founder.logo}</span>
-                    )}
+                  {founder.logo ? (
+                    <img
+                      src={
+                        founder.logo.startsWith("http")
+                          ? founder.logo
+                          : `${API_URL}${founder.logo}`
+                      }
+                      alt={founder.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600" />
+                  )}
                   </div>
                   <div>
                     <div className="text-white text-sm">{founder.company}</div>

@@ -118,10 +118,7 @@ export default function DisruptLanding() {
             transition={{ delay: 0.6, duration: 0.8 }}
           >
             <div className="text-white text-xl font-light tracking-wide">
-              WHO WILL PITCH?
-            </div>
-            <div className="text-white text-xl font-light tracking-wide">
-              WHO WILL DISRUPT?
+              Audience Choice Award
             </div>
           </motion.div>
 
