@@ -42,6 +42,7 @@ export default function VotingPage() {
   const [selectedFounder, setSelectedFounder] = useState(null);
   const [tempAmount, setTempAmount] = useState("");
   const totalBudget = 50000;
+  const [amountError, setAmountError] = useState(""); // Add this line
   const VOTE_CODE_KEY = "user_vote_code";
 
   useEffect(() => {
@@ -63,7 +64,6 @@ export default function VotingPage() {
     }
   };
 
-
   const allocatedAmount = Object.values(allocations).reduce(
     (sum, val) => sum + (val || 0),
     0
@@ -78,61 +78,75 @@ export default function VotingPage() {
   const handleCloseModal = () => {
     setSelectedFounder(null);
     setTempAmount("");
+    setAmountError("");
   };
 
   const handleConfirmAmount = () => {
-    const numValue = parseInt(tempAmount) || 0;
+    const numValue = parseFloat(tempAmount) || 0;
     const currentAllocation = allocations[selectedFounder.id] || 0;
     const otherAllocations = Object.entries(allocations)
       .filter(([id]) => id !== selectedFounder.id)
       .reduce((sum, [, val]) => sum + val, 0);
 
     const maxAllowable = totalBudget - otherAllocations;
-    const finalValue = Math.min(Math.max(0, numValue), maxAllowable);
+
+    if (numValue > maxAllowable) {
+      setAmountError(
+        `Amount exceeds remaining budget! You can only allocate €${maxAllowable.toLocaleString()}`
+      );
+      return;
+    }
+
+    if (numValue < 0) {
+      setAmountError(`Amount cannot be negative!`);
+      return;
+    }
 
     setAllocations((prev) => ({
       ...prev,
-      [selectedFounder.id]: finalValue,
+      [selectedFounder.id]: numValue,
     }));
+    setAmountError("");
     handleCloseModal();
   };
 
-const handleSubmit = async () => {
-  if (allocatedAmount !== totalBudget) {
-    alert(`Please allocate all €${totalBudget.toLocaleString()}!`);
-    return;
-  }
+  const handleSubmit = async () => {
+    if (allocatedAmount !== totalBudget) {
+      alert(`Please allocate all €${totalBudget.toLocaleString()}!`);
+      return;
+    }
 
-  // Check if user has already voted
-  const existingVoteCode = localStorage.getItem(VOTE_CODE_KEY);
-  if (existingVoteCode) {
-    setShowAlreadyVotedModal(true);
-    return;
-  }
+    // Check if user has already voted
+    const existingVoteCode = localStorage.getItem(VOTE_CODE_KEY);
+    if (existingVoteCode) {
+      setShowAlreadyVotedModal(true);
+      return;
+    }
 
-  try {
-    const response = await fetch(`${API_URL}/api/submit-vote`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        investorName: investorName,
-        allocations: allocations,
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      // Save vote code to localStorage
-      localStorage.setItem(VOTE_CODE_KEY, data.vote_code);
-      setGeneratedVoteCode(data.vote_code);
-      setShowThankYou(true);
-    } else {
+    try {
+      const response = await fetch(`${API_URL}/api/submit-vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          investorName: investorName,
+          allocations: allocations,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Save vote code to localStorage
+        localStorage.setItem(VOTE_CODE_KEY, data.vote_code);
+        setGeneratedVoteCode(data.vote_code);
+        setShowThankYou(true);
+      } else {
+        const data = await response.json();
+        console.log(data.detail);
+        setShowAlreadyVotedModal(true);
+      }
+    } catch (error) {
       setShowAlreadyVotedModal(true);
     }
-  } catch (error) {
-    setShowAlreadyVotedModal(true);
-  }
-};
+  };
 
   if (showThankYou) {
     return (
@@ -312,10 +326,14 @@ const handleSubmit = async () => {
 
               {/* Allocated Amount */}
               <div className="text-center">
-                {allocations[founder.id] > 0 ? (
+                {allocations[founder.id] !== undefined ? (
                   <div className="bg-green-500/20 border border-green-400/50 rounded-lg py-2 px-3">
                     <p className="text-green-300 text-lg font-semibold">
-                      €{allocations[founder.id].toLocaleString()}
+                      €
+                      {allocations[founder.id].toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </p>
                   </div>
                 ) : (
@@ -432,9 +450,10 @@ const handleSubmit = async () => {
                   </span>
                   <input
                     type="number"
+                    step="0.01" // Add this to allow decimals
                     value={tempAmount}
                     onChange={(e) => setTempAmount(e.target.value)}
-                    placeholder="0"
+                    placeholder="0.00" // Change placeholder
                     className="w-full bg-white/10 text-white text-2xl font-light pl-10 pr-4 py-4 rounded-xl border border-white/20 focus:border-cyan-400 focus:outline-none"
                     min="0"
                     max={
@@ -443,7 +462,18 @@ const handleSubmit = async () => {
                   />
                 </div>
               </div>
-
+              {/* Error Message - ADD THIS */}
+              {amountError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 bg-red-500/20 border border-red-400/50 rounded-lg p-3"
+                >
+                  <p className="text-red-300 text-sm text-center">
+                    {amountError}
+                  </p>
+                </motion.div>
+              )}
               {/* Quick Amounts */}
               <div className="grid grid-cols-4 gap-2 mb-4">
                 {[5000, 10000, 15000, 20000].map((amount) => (
