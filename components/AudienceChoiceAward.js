@@ -92,7 +92,7 @@ export default function VotingPage() {
 
     if (numValue > maxAllowable) {
       setAmountError(
-        `Amount exceeds remaining budget! You can only allocate €${maxAllowable.toLocaleString()}`
+        `Amount exceeds remaining budget! You can only allocate ${maxAllowable.toLocaleString()} Disrupt Dollars`
       );
       return;
     }
@@ -112,7 +112,7 @@ export default function VotingPage() {
 
   const handleSubmit = async () => {
     if (allocatedAmount !== totalBudget) {
-      alert(`Please allocate all €${totalBudget.toLocaleString()}!`);
+      alert(`Please allocate all ${totalBudget.toLocaleString()} Disrupt Dollars!`);
       return;
     }
 
@@ -249,7 +249,7 @@ export default function VotingPage() {
             <div>
               <div className="text-white/60 text-xs mb-1">Remaining Budget</div>
               <motion.div
-                className="text-2xl font-light text-white"
+                className="text-base font-light text-white"
                 animate={{
                   color:
                     remainingBudget < 10000
@@ -259,14 +259,14 @@ export default function VotingPage() {
                       : "#ffffff",
                 }}
               >
-                €{remainingBudget.toLocaleString()}
+                {remainingBudget.toLocaleString()} Disrupt Dollars
               </motion.div>
             </div>
 
             <div className="text-right">
               <div className="text-white/60 text-xs mb-1">Allocated</div>
-              <div className="text-2xl font-light text-cyan-400">
-                €{allocatedAmount.toLocaleString()}
+              <div className="text-base font-light text-cyan-400">
+                {allocatedAmount.toLocaleString()} Disrupt Dollars
               </div>
             </div>
           </div>
@@ -328,12 +328,11 @@ export default function VotingPage() {
               <div className="text-center">
                 {allocations[founder.id] !== undefined ? (
                   <div className="bg-green-500/20 border border-green-400/50 rounded-lg py-2 px-3">
-                    <p className="text-green-300 text-lg font-semibold">
-                      €
+                    <p className="text-green-300 text-sm font-semibold">
                       {allocations[founder.id].toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
-                      })}
+                      })} Disrupt Dollars
                     </p>
                   </div>
                 ) : (
@@ -442,12 +441,9 @@ export default function VotingPage() {
               {/* Amount Input */}
               <div className="mb-4">
                 <label className="text-white/60 text-sm mb-2 block">
-                  Investment Amount
+                   Amount in Disrupt Dollars
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-xl">
-                    €
-                  </span>
                   <input
                     type="number"
                     step="0.01" // Add this to allow decimals
@@ -460,6 +456,7 @@ export default function VotingPage() {
                       remainingBudget + (allocations[selectedFounder.id] || 0)
                     }
                   />
+
                 </div>
               </div>
               {/* Error Message - ADD THIS */}
@@ -469,23 +466,23 @@ export default function VotingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="mb-4 bg-red-500/20 border border-red-400/50 rounded-lg p-3"
                 >
-                  <p className="text-red-300 text-sm text-center">
+                  <p className="text-red-300 text-xs text-center">
                     {amountError}
                   </p>
                 </motion.div>
               )}
               {/* Quick Amounts */}
-              <div className="grid grid-cols-4 gap-2 mb-4">
+              {/* <div className="grid grid-cols-4 gap-2 mb-4">
                 {[5000, 10000, 15000, 20000].map((amount) => (
                   <button
                     key={amount}
                     onClick={() => setTempAmount(amount.toString())}
                     className="bg-cyan-500/20 text-cyan-300 py-2 rounded-lg text-sm border border-cyan-500/50"
                   >
-                    €{amount / 1000}k
+                    {amount / 1000}k
                   </button>
                 ))}
-              </div>
+              </div> */}
 
               {/* Confirm Button */}
               <motion.button
@@ -602,9 +599,8 @@ function ThankYouPage({ allocations, founders, investorName, voteCode }) {
           transition={{ delay: 0.7 }}
           className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/20 mb-6"
         >
-          <h2 className="text-white text-xl font-light mb-4 flex items-center space-x-2">
-            <DollarSign className="w-5 h-5 text-cyan-400" />
-            <span>Your Investment Portfolio</span>
+          <h2 className="text-white text-base font-light mb-4 flex items-center space-x-2">
+            <span>Your Investment Portfolio in Disrupt Dollars</span>
           </h2>
 
           <div className="space-y-3">
@@ -637,8 +633,8 @@ function ThankYouPage({ allocations, founders, investorName, voteCode }) {
                     <div className="text-white/50 text-xs">{founder.name}</div>
                   </div>
                 </div>
-                <div className="text-cyan-400 font-semibold">
-                  €{founder.amount.toLocaleString()}
+                <div className="text-cyan-400 font-semibold text-sm">
+                  {founder.amount.toLocaleString()}
                 </div>
               </motion.div>
             ))}

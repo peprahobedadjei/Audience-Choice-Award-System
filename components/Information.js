@@ -37,29 +37,6 @@ export default function DisruptInfoPage() {
    
   };
 
-  const steps = [
-    {
-      number: "1",
-      title: "Swipe & Explore",
-      description: "Browse through each founder's",
-      icon: TrendingUp,
-      color: "from-cyan-400 to-cyan-600"
-    },
-    {
-      number: "2",
-      title: "Allocate Wisely",
-      description: "Distribute your investment",
-      icon: DollarSign,
-      color: "from-purple-400 to-purple-600"
-    },
-    {
-      number: "3",
-      title: "Submit Your Vote",
-      description: "Invest all €50k to cast your final decision",
-      icon: Sparkles,
-      color: "from-pink-400 to-pink-600"
-    }
-  ];
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -157,7 +134,7 @@ export default function DisruptInfoPage() {
                 YOUR INVESTMENT BUDGET
               </div>
               <motion.div 
-                className="text-5xl font-light text-white text-center tracking-wider"
+                className="text-2xl font-light text-white text-center tracking-wider"
                 animate={{
                   textShadow: [
                     "0 0 20px rgba(255,255,255,0.3)",
@@ -171,56 +148,43 @@ export default function DisruptInfoPage() {
                   ease: "easeInOut"
                 }}
               >
-                €{budget.toLocaleString()}
+                  {budget.toLocaleString()} Disrupt Dollars
               </motion.div>
             </div>
           </div>
         </motion.div>
 
-        {/* Steps Section */}
-        <motion.div
-          className="space-y-4 mb-8 flex-grow"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-        >
-          {steps.map((step, index) => (
-            <motion.div
-              key={step.number}
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 + index * 0.15 }}
-              whileHover={{ scale: 1.02, x: 5 }}
-              className="relative"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 shadow-xl">
-                <div className="flex items-start space-x-4">
-                  {/* Step Number */}
-                  <motion.div
-                    className={`flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br ${step.color} flex items-center justify-center text-white text-xl font-semibold shadow-lg`}
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    {step.number}
-                  </motion.div>
-                  
-                  {/* Step Content */}
-                  <div className="flex-grow">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <step.icon className="w-5 h-5 text-cyan-300" />
-                      <h3 className="text-white text-lg font-light tracking-wide">
-                        {step.title}
-                      </h3>
-                    </div>
-                    <p className="text-white/70 text-sm tracking-wide">
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+        {/* Info Section */}
+<motion.div
+  className="mb-8 flex-grow space-y-4"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ duration: 0.6, delay: 0.6 }}
+>
+  {/* Main Explanation */}
+  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
+    <h3 className="text-cyan-300 text-lg font-light mb-3 text-center">
+      How It Works
+    </h3>
+    <p className="text-white/80 text-sm leading-relaxed text-center">
+      Allocate your <span className="text-cyan-300 font-semibold">50,000 Disrupt Dollars</span> across the founders you believe in. Browse their pitches, decide who gets your support, and cast your vote!
+    </p>
+  </div>
+
+  {/* Important Notes */}
+  <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-md rounded-2xl p-5 border border-purple-300/30">
+    <h4 className="text-pink-300 text-sm font-semibold mb-3 flex items-center justify-center">
+      <Sparkles className="w-4 h-4 mr-2" />
+      Important to Know
+    </h4>
+    <ul className="space-y-2 text-white text-sm">
+      <li>1. <span className="text-white">Disrupt Dollars are virtual currency.</span> No real money involved!</li>
+      <li>2. <span className="text-white">No personal data is collected.</span> Completely anonymous voting</li>
+      <li>3. <span className="text-white">Just for fun.</span> Help crown the audience favorite!</li>
+    </ul>
+  </div>
+</motion.div>
+
 
         {/* CTA Button */}
         <motion.div
@@ -305,7 +269,7 @@ export default function DisruptInfoPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 1.4 }}
           >
-            May the best startup win! 🚀
+           Virtual investing • No real money • No data collected
           </motion.p>
         </motion.div>
 

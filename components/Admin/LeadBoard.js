@@ -216,8 +216,8 @@ export default function Leaderboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/60 text-sm mb-1">Total Invested</p>
-                <p className="text-3xl font-light text-white">
-                  €{(totalVotes * 50000).toLocaleString()}
+                <p className="text-2xl font-light text-white">
+                {(totalVotes * 50000).toLocaleString()} Disrupt Dollars
                 </p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center">
@@ -300,7 +300,7 @@ export default function Leaderboard() {
                         initial={{ scale: 1.2 }}
                         animate={{ scale: 1 }}
                       >
-                        €{founder.total_allocated.toLocaleString()}
+                        {founder.total_allocated.toLocaleString()} Disrupt Dollars
                       </motion.div>
                       <div className="text-white/60 text-xs mt-1">
                         {totalVotes > 0 ? Math.round((founder.total_allocated / (totalVotes * 50000)) * 100) : 0}% of total
