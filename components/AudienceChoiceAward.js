@@ -42,6 +42,7 @@ export default function VotingPage() {
   const [selectedFounder, setSelectedFounder] = useState(null);
   const [tempAmount, setTempAmount] = useState("");
   const totalBudget = 50000;
+  const VOTE_CODE_KEY = "user_vote_code";
 
   useEffect(() => {
     fetchFounders();
@@ -62,39 +63,6 @@ export default function VotingPage() {
     }
   };
 
-const getDeviceFingerprint = async () => {
-  // Collect more unique data points
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  ctx.textBaseline = 'top';
-  ctx.font = '14px Arial';
-  ctx.fillText('fingerprint', 2, 2);
-  const canvasData = canvas.toDataURL();
-  
-  const fingerprint = {
-    userAgent: navigator.userAgent,
-    language: navigator.language,
-    languages: navigator.languages?.join(",") || "",
-    platform: navigator.platform,
-    screenResolution: `${screen.width}x${screen.height}x${screen.colorDepth}`,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    hardwareConcurrency: navigator.hardwareConcurrency || 0,
-    deviceMemory: navigator.deviceMemory || 0,
-    touchPoints: navigator.maxTouchPoints || 0,
-    vendor: navigator.vendor || "",
-    cookieEnabled: navigator.cookieEnabled,
-    canvasFingerprint: canvasData.slice(-50), // Use last 50 chars of canvas
-    plugins: Array.from(navigator.plugins || []).map(p => p.name).join(','),
-    // Add a random session ID to guarantee uniqueness per browser session
-    sessionId: sessionStorage.getItem('voteSessionId') || (() => {
-      const id = Math.random().toString(36) + Date.now().toString(36);
-      sessionStorage.setItem('voteSessionId', id);
-      return id;
-    })(),
-  };
-
-  return JSON.stringify(fingerprint);
-};
 
   const allocatedAmount = Object.values(allocations).reduce(
     (sum, val) => sum + (val || 0),
@@ -129,36 +97,42 @@ const getDeviceFingerprint = async () => {
     handleCloseModal();
   };
 
-  const handleSubmit = async () => {
-    if (allocatedAmount !== totalBudget) {
-      alert(`Please allocate all €${totalBudget.toLocaleString()}!`);
-      return;
-    }
+const handleSubmit = async () => {
+  if (allocatedAmount !== totalBudget) {
+    alert(`Please allocate all €${totalBudget.toLocaleString()}!`);
+    return;
+  }
 
-   const deviceFingerprint = await getDeviceFingerprint();
+  // Check if user has already voted
+  const existingVoteCode = localStorage.getItem(VOTE_CODE_KEY);
+  if (existingVoteCode) {
+    setShowAlreadyVotedModal(true);
+    return;
+  }
 
-    try {
-      const response = await fetch(`${API_URL}/api/submit-vote`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          deviceFingerprint: deviceFingerprint,
-          investorName: investorName,
-          allocations: allocations,
-        }),
-      });
+  try {
+    const response = await fetch(`${API_URL}/api/submit-vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        investorName: investorName,
+        allocations: allocations,
+      }),
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        setGeneratedVoteCode(data.vote_code);
-        setShowThankYou(true);
-      } else {
-        setShowAlreadyVotedModal(true);
-      }
-    } catch (error) {
+    if (response.ok) {
+      const data = await response.json();
+      // Save vote code to localStorage
+      localStorage.setItem(VOTE_CODE_KEY, data.vote_code);
+      setGeneratedVoteCode(data.vote_code);
+      setShowThankYou(true);
+    } else {
       setShowAlreadyVotedModal(true);
     }
-  };
+  } catch (error) {
+    setShowAlreadyVotedModal(true);
+  }
+};
 
   if (showThankYou) {
     return (
