@@ -62,28 +62,39 @@ export default function VotingPage() {
     }
   };
 
-  const getDeviceFingerprint = () => {
-    const fingerprint = {
-      userAgent: navigator.userAgent,
-      language: navigator.language,
-      languages: navigator.languages?.join(",") || "",
-      platform: navigator.platform,
-      screenResolution: `${screen.width}x${screen.height}x${screen.colorDepth}`,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      hardwareConcurrency: navigator.hardwareConcurrency || 0,
-      deviceMemory: navigator.deviceMemory || 0,
-      touchPoints: navigator.maxTouchPoints || 0,
-    };
-
-    const fingerprintString = JSON.stringify(fingerprint);
-    let hash = 0;
-    for (let i = 0; i < fingerprintString.length; i++) {
-      const char = fingerprintString.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return hash.toString(36);
+const getDeviceFingerprint = async () => {
+  // Collect more unique data points
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Arial';
+  ctx.fillText('fingerprint', 2, 2);
+  const canvasData = canvas.toDataURL();
+  
+  const fingerprint = {
+    userAgent: navigator.userAgent,
+    language: navigator.language,
+    languages: navigator.languages?.join(",") || "",
+    platform: navigator.platform,
+    screenResolution: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    hardwareConcurrency: navigator.hardwareConcurrency || 0,
+    deviceMemory: navigator.deviceMemory || 0,
+    touchPoints: navigator.maxTouchPoints || 0,
+    vendor: navigator.vendor || "",
+    cookieEnabled: navigator.cookieEnabled,
+    canvasFingerprint: canvasData.slice(-50), // Use last 50 chars of canvas
+    plugins: Array.from(navigator.plugins || []).map(p => p.name).join(','),
+    // Add a random session ID to guarantee uniqueness per browser session
+    sessionId: sessionStorage.getItem('voteSessionId') || (() => {
+      const id = Math.random().toString(36) + Date.now().toString(36);
+      sessionStorage.setItem('voteSessionId', id);
+      return id;
+    })(),
   };
+
+  return JSON.stringify(fingerprint);
+};
 
   const allocatedAmount = Object.values(allocations).reduce(
     (sum, val) => sum + (val || 0),
