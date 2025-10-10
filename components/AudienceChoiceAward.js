@@ -135,7 +135,7 @@ const getDeviceFingerprint = async () => {
       return;
     }
 
-    const deviceFingerprint = getDeviceFingerprint();
+   const deviceFingerprint = await getDeviceFingerprint();
 
     try {
       const response = await fetch(`${API_URL}/api/submit-vote`, {
