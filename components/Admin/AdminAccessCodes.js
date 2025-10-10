@@ -287,7 +287,7 @@ export default function AccessCodesManager() {
         </div>
 
         {/* Generate Codes Section */}
-        <motion.div
+        {/* <motion.div
           className="mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -366,7 +366,7 @@ export default function AccessCodesManager() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </motion.div> */}
 
         {/* Codes List */}
         <motion.div
@@ -383,9 +383,10 @@ export default function AccessCodesManager() {
             <div className="hidden md:grid md:grid-cols-5 gap-4 px-4 py-3 bg-white/5 rounded-xl mb-3 text-white/60 text-sm">
               <div>Code</div>
               <div>Status</div>
+               <div>Investor</div>  
               <div>Created At</div>
               <div>Used At</div>
-              <div className="text-right">Actions</div>
+              {/* <div className="text-right">Actions</div> */}
             </div>
 
             {/* Codes List - Scrollable */}
@@ -449,7 +450,7 @@ export default function AccessCodesManager() {
                         )}
                       </div>
 
-                      {!code.used && (
+                      {/* {!code.used && (
                         <motion.button
                           onClick={() => handleCopyCode(code.code)}
                           className="w-full bg-cyan-500/20 text-cyan-300 py-2 rounded-lg flex items-center justify-center space-x-2 text-sm"
@@ -478,7 +479,7 @@ export default function AccessCodesManager() {
                           <X className="w-4 h-4" />
                           <span>Delete Code</span>
                         </motion.button>
-                      )}
+                      )} */}
                     </div>
 
                     {/* Desktop Layout */}
@@ -496,7 +497,10 @@ export default function AccessCodesManager() {
                       >
                         {code.used ? "Used" : "Available"}
                       </div>
-
+  {/* Add investor name column */}
+  <div className="text-white/80 text-sm">
+    {code.investor_name || "-"}
+  </div>
                       <div className="text-white/80 text-sm">
                         {new Date(code.created_at).toLocaleString()}
                       </div>
@@ -506,7 +510,7 @@ export default function AccessCodesManager() {
                           ? new Date(code.used_at).toLocaleString()
                           : "-"}
                       </div>
-
+{/* 
                       <div className="flex justify-end space-x-2">
                         {!code.used && (
                           <>
@@ -540,7 +544,7 @@ export default function AccessCodesManager() {
                             </motion.button>
                           </>
                         )}
-                      </div>
+                      </div> */}
                     </div>
                   </motion.div>
                 ))

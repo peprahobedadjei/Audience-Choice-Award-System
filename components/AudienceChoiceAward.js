@@ -1,15 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowRight,
-  ArrowLeft,
-  Check,
-  TrendingUp,
-  Sparkles,
-  Award,
-  DollarSign,
-} from "lucide-react";
+import { Check, X, Award, DollarSign } from "lucide-react";
 
 // Generate random investor name
 const generateInvestorName = () => {
@@ -32,54 +24,66 @@ const generateInvestorName = () => {
     "Pioneer",
   ];
   const numbers = Math.floor(Math.random() * 999) + 100;
-
   const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
   const noun = nouns[Math.floor(Math.random() * nouns.length)];
-
   return `${adj}${noun}${numbers}`;
 };
 
 export default function VotingPage() {
   const API_URL = "https://audience-choice-award-backend.vercel.app";
 
-  // Add founders state
   const [founders, setFounders] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [generatedVoteCode, setGeneratedVoteCode] = useState(null);
   const [allocations, setAllocations] = useState({});
   const [investorName, setInvestorName] = useState("");
   const [showThankYou, setShowThankYou] = useState(false);
+  const [showAlreadyVotedModal, setShowAlreadyVotedModal] = useState(false);
+  const [selectedFounder, setSelectedFounder] = useState(null);
+  const [tempAmount, setTempAmount] = useState("");
   const totalBudget = 50000;
 
   useEffect(() => {
     fetchFounders();
+    setInvestorName(generateInvestorName());
   }, []);
 
   const fetchFounders = async () => {
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}/api/founders`);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch founders");
-      }
-
+      if (!response.ok) throw new Error("Failed to fetch founders");
       const data = await response.json();
-      console.log(data);
       setFounders(data);
     } catch (error) {
-      console.error("Error fetching founders:", error);
       alert("Failed to load founders from database");
     } finally {
       setLoading(false);
     }
   };
 
-  // Generate investor name only on client side to avoid hydration mismatch
-  useEffect(() => {
-    setInvestorName(generateInvestorName());
-  }, []);
+  const getDeviceFingerprint = () => {
+    const fingerprint = {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      languages: navigator.languages?.join(",") || "",
+      platform: navigator.platform,
+      screenResolution: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      hardwareConcurrency: navigator.hardwareConcurrency || 0,
+      deviceMemory: navigator.deviceMemory || 0,
+      touchPoints: navigator.maxTouchPoints || 0,
+    };
+
+    const fingerprintString = JSON.stringify(fingerprint);
+    let hash = 0;
+    for (let i = 0; i < fingerprintString.length; i++) {
+      const char = fingerprintString.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    return hash.toString(36);
+  };
 
   const allocatedAmount = Object.values(allocations).reduce(
     (sum, val) => sum + (val || 0),
@@ -87,93 +91,62 @@ export default function VotingPage() {
   );
   const remainingBudget = totalBudget - allocatedAmount;
 
-  const currentFounder = founders[currentIndex];
-  const currentAllocation = currentFounder
-    ? allocations[currentFounder.id] || 0
-    : 0;
-
-const handleAllocationChange = (value) => {
-  const numValue = parseInt(value) || 0;
-  
-  // Calculate allocations for OTHER founders (exclude current)
-  const otherAllocations = Object.entries(allocations)
-    .filter(([id]) => id !== currentFounder.id)  // String comparison
-    .reduce((sum, [, val]) => sum + val, 0);
-
-  // Maximum we can allocate to current founder
-  const maxAllowable = totalBudget - otherAllocations;
-  
-  // Clamp value between 0 and maxAllowable
-  const finalValue = Math.min(Math.max(0, numValue), maxAllowable);
-
-  setAllocations((prev) => ({
-    ...prev,
-    [currentFounder.id]: finalValue,
-  }));
-};
-
-  const handleNext = () => {
-    if (currentIndex < founders.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    }
+  const handleOpenModal = (founder) => {
+    setSelectedFounder(founder);
+    setTempAmount(allocations[founder.id] || "");
   };
 
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-    }
+  const handleCloseModal = () => {
+    setSelectedFounder(null);
+    setTempAmount("");
   };
 
-const handleSubmit = async () => {
-  if (allocatedAmount !== totalBudget) {
-    alert(
-      `Please allocate all €${totalBudget.toLocaleString()}! You have €${remainingBudget.toLocaleString()} remaining.`
-    );
-    return;
-  }
+  const handleConfirmAmount = () => {
+    const numValue = parseInt(tempAmount) || 0;
+    const currentAllocation = allocations[selectedFounder.id] || 0;
+    const otherAllocations = Object.entries(allocations)
+      .filter(([id]) => id !== selectedFounder.id)
+      .reduce((sum, [, val]) => sum + val, 0);
 
-  // Get access code from localStorage
-  const accessCode = localStorage.getItem('access_code');
-  
-  if (!accessCode) {
-    alert('No access code found. Please scan a valid QR code.');
-    window.location.href = '/';
-    return;
-  }
+    const maxAllowable = totalBudget - otherAllocations;
+    const finalValue = Math.min(Math.max(0, numValue), maxAllowable);
 
-  try {
-    // Submit vote to API
-    const response = await fetch(`${API_URL}/api/submit-vote`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        accessCode: accessCode,
-        investorName: investorName,
-        allocations: allocations,
-      }),
-    });
+    setAllocations((prev) => ({
+      ...prev,
+      [selectedFounder.id]: finalValue,
+    }));
+    handleCloseModal();
+  };
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to submit vote');
+  const handleSubmit = async () => {
+    if (allocatedAmount !== totalBudget) {
+      alert(`Please allocate all €${totalBudget.toLocaleString()}!`);
+      return;
     }
 
-    // Clear access code from localStorage
-    localStorage.removeItem('access_code');
+    const deviceFingerprint = getDeviceFingerprint();
 
-    // Show thank you page
-    setShowThankYou(true);
+    try {
+      const response = await fetch(`${API_URL}/api/submit-vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          deviceFingerprint: deviceFingerprint,
+          investorName: investorName,
+          allocations: allocations,
+        }),
+      });
 
-  } catch (error) {
-    console.error('Error submitting vote:', error);
-    alert(error.message || 'Failed to submit vote. Please try again.');
-  }
-};
-
-  const quickAllocate = (amount) => {
-    handleAllocationChange(currentAllocation + amount);
+      if (response.ok) {
+        const data = await response.json();
+        setGeneratedVoteCode(data.vote_code);
+        setShowThankYou(true);
+      } else {
+        setShowAlreadyVotedModal(true);
+      }
+    } catch (error) {
+      setShowAlreadyVotedModal(true);
+    }
   };
 
   if (showThankYou) {
@@ -182,10 +155,11 @@ const handleSubmit = async () => {
         allocations={allocations}
         founders={founders}
         investorName={investorName}
+        voteCode={generatedVoteCode}
       />
     );
   }
-  // Show loading state while fetching founders
+
   if (loading) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -194,7 +168,6 @@ const handleSubmit = async () => {
     );
   }
 
-  // Show message if no founders available
   if (founders.length === 0) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -204,6 +177,46 @@ const handleSubmit = async () => {
             Please add founders in the admin panel
           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (showAlreadyVotedModal) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <style jsx global>{`
+          @font-face {
+            font-family: "Squartiqa";
+            src: url("/fonts/Squartiqa4FUltraLight.ttf") format("truetype");
+            font-weight: 200;
+            font-style: normal;
+          }
+          * {
+            font-family: "Squartiqa", -apple-system, BlinkMacSystemFont,
+              "Segoe UI", sans-serif;
+          }
+        `}</style>
+        <motion.div
+          className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-red-500/50 max-w-md w-full text-center"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <X className="w-10 h-10 text-red-400" />
+          </div>
+          <h2 className="text-3xl text-white font-light mb-4">Already Voted</h2>
+          <p className="text-red-300 mb-6">
+            This acess code has already been used. You can only vote once.
+          </p>
+          <motion.button
+            onClick={() => (window.location.href = "/")}
+            className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 text-white py-4 rounded-xl"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Go to Home
+          </motion.button>
+        </motion.div>
       </div>
     );
   }
@@ -224,75 +237,78 @@ const handleSubmit = async () => {
       `}</style>
 
       {/* Header */}
-      <div className="relative z-20 bg-black/30 backdrop-blur-md border-b border-white/10 px-6 py-4">
-        <div className="flex justify-between items-center mb-3">
-          <div className="text-white/60 text-sm">Investor</div>
-          <div className="text-cyan-400 font-semibold text-sm">
-            {investorName}
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="text-white/60 text-xs mb-1">Remaining Budget</div>
-            <motion.div
-              className="text-2xl font-light text-white"
-              animate={{
-                color:
-                  remainingBudget < 10000
-                    ? "#f87171"
-                    : remainingBudget < 25000
-                    ? "#fbbf24"
-                    : "#ffffff",
-              }}
-            >
-              €{remainingBudget.toLocaleString()}
-            </motion.div>
-          </div>
-
-          <div className="text-right">
-            <div className="text-white/60 text-xs mb-1">Allocated</div>
-            <div className="text-2xl font-light text-cyan-400">
-              €{allocatedAmount.toLocaleString()}
+      <div className="relative z-20 bg-black/30 backdrop-blur-md border-b border-white/10 px-4 py-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-3">
+            <div className="text-white/60 text-sm">Investor</div>
+            <div className="text-cyan-400 font-semibold text-sm">
+              {investorName}
             </div>
           </div>
-        </div>
 
-        {/* Progress Bar */}
-        <div className="mt-3 bg-white/10 rounded-full h-2 overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-cyan-400 to-pink-500"
-            initial={{ width: 0 }}
-            animate={{ width: `${(allocatedAmount / totalBudget) * 100}%` }}
-            transition={{ duration: 0.5 }}
-          />
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="text-white/60 text-xs mb-1">Remaining Budget</div>
+              <motion.div
+                className="text-2xl font-light text-white"
+                animate={{
+                  color:
+                    remainingBudget < 10000
+                      ? "#f87171"
+                      : remainingBudget < 25000
+                      ? "#fbbf24"
+                      : "#ffffff",
+                }}
+              >
+                €{remainingBudget.toLocaleString()}
+              </motion.div>
+            </div>
+
+            <div className="text-right">
+              <div className="text-white/60 text-xs mb-1">Allocated</div>
+              <div className="text-2xl font-light text-cyan-400">
+                €{allocatedAmount.toLocaleString()}
+              </div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mt-3 bg-white/10 rounded-full h-2 overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-cyan-400 to-pink-500"
+              initial={{ width: 0 }}
+              animate={{ width: `${(allocatedAmount / totalBudget) * 100}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Founder Card */}
-      <div className="relative z-10 px-6 py-6 flex-grow">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentFounder.id}
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.3 }}
-            className="mb-6"
-          >
-            {/* Founder Info Card */}
-            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-3xl p-6 border border-white/20 shadow-2xl mb-6">
-              {/* Profile Photo */}
-              <div className="flex justify-center mb-4">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 shadow-xl">
-                  {currentFounder.profile ? (
+      {/* Founders Grid */}
+      <div className="relative z-10 px-4 py-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+          {founders.map((founder, idx) => (
+            <motion.div
+              key={founder.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.1 }}
+              onClick={() => handleOpenModal(founder)}
+              className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-2xl p-4 border border-white/20 cursor-pointer hover:border-cyan-400/50 transition-all"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {/* Profile Image */}
+              <div className="flex justify-center mb-3">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-white/20">
+                  {founder.profile ? (
                     <img
                       src={
-                        currentFounder.profile.startsWith("http")
-                          ? currentFounder.profile
-                          : `${API_URL}${currentFounder.profile}`
+                        founder.profile.startsWith("http")
+                          ? founder.profile
+                          : `${API_URL}${founder.profile}`
                       }
-                      alt={currentFounder.name}
+                      alt={founder.name}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -301,179 +317,183 @@ const handleSubmit = async () => {
                 </div>
               </div>
 
-              <div className="flex items-start space-x-4 mb-4">
-                {/* Logo */}
-                <div
-                  className={`w-16 h-16 rounded-2xl ${
-                    currentFounder.logo.startsWith("/")
-                      ? "bg-white"
-                      : `bg-gradient-to-br ${currentFounder.color}`
-                  } flex items-center justify-center shadow-lg flex-shrink-0`}
-                >
-                  {currentFounder.logo ? (
+              {/* Name & Company */}
+              <div className="text-center mb-3">
+                <h3 className="text-white text-sm font-light mb-1">
+                  {founder.name}
+                </h3>
+                <p className="text-cyan-300 text-xs">{founder.company}</p>
+              </div>
+
+              {/* Allocated Amount */}
+              <div className="text-center">
+                {allocations[founder.id] > 0 ? (
+                  <div className="bg-green-500/20 border border-green-400/50 rounded-lg py-2 px-3">
+                    <p className="text-green-300 text-lg font-semibold">
+                      €{allocations[founder.id].toLocaleString()}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-white/5 border border-white/20 rounded-lg py-2 px-3">
+                    <p className="text-white/40 text-sm">Tap to allocate</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Cast Vote Button */}
+        {allocatedAmount === totalBudget && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={handleSubmit}
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl flex items-center justify-center space-x-2 text-lg font-semibold shadow-lg"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Check className="w-6 h-6" />
+            <span>Cast Vote</span>
+          </motion.button>
+        )}
+      </div>
+
+      {/* Modal for Allocation */}
+      <AnimatePresence>
+        {selectedFounder && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={handleCloseModal}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/30 max-w-md w-full"
+            >
+              {/* Close Button */}
+              <button
+                onClick={handleCloseModal}
+                className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+
+              {/* Profile Image */}
+              <div className="flex justify-center mb-4">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20">
+                  {selectedFounder.profile ? (
                     <img
                       src={
-                        currentFounder.logo.startsWith("http")
-                          ? currentFounder.logo
-                          : `${API_URL}${currentFounder.logo}`
+                        selectedFounder.profile.startsWith("http")
+                          ? selectedFounder.profile
+                          : `${API_URL}${selectedFounder.profile}`
                       }
-                      alt={currentFounder.name}
+                      alt={selectedFounder.name}
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-3xl">{currentFounder.logo}</span>
+                    <div className="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600" />
                   )}
-                </div>
-
-                {/* Name & Company */}
-                <div className="flex-grow">
-                  <h2 className="text-white text-2xl font-light mb-1">
-                    {currentFounder.name}
-                  </h2>
-                  <div
-                    className={`inline-block px-3 py-1 rounded-full ${
-                      currentFounder.logo.startsWith("/")
-                        ? "bg-green-500"
-                        : `bg-gradient-to-r ${currentFounder.color}`
-                    } text-white text-sm`}
-                  >
-                    {currentFounder.company}
-                  </div>
                 </div>
               </div>
 
-              {/* Description */}
-              <p className="text-white/80 text-sm leading-relaxed tracking-wide">
-                {currentFounder.description}
-              </p>
-            </div>
-
-            {/* Investment Input */}
-            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-3xl p-6 border border-white/20 shadow-2xl mb-4">
-              <label className="text-white/60 text-sm mb-3 block">
-                Your Investment Amount
-              </label>
-
+              {/* Logo & Info */}
               <div className="flex items-center space-x-3 mb-4">
-                <div className="flex-grow relative">
+                <div
+                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${selectedFounder.color} flex items-center justify-center`}
+                >
+                  {selectedFounder.logo && (
+                    <img
+                      src={
+                        selectedFounder.logo.startsWith("http")
+                          ? selectedFounder.logo
+                          : `${API_URL}${selectedFounder.logo}`
+                      }
+                      alt={selectedFounder.name}
+                      className="w-full h-full object-cover rounded-xl"
+                    />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-white text-xl font-light">
+                    {selectedFounder.name}
+                  </h2>
+                  <p className="text-cyan-300 text-sm">
+                    {selectedFounder.company}
+                  </p>
+                </div>
+              </div>
+
+              <div className="max-h-40 overflow-y-auto mb-4">
+                <p className="text-white/80 text-sm leading-relaxed">
+                  {selectedFounder.description}
+                </p>
+              </div>
+
+              {/* Amount Input */}
+              <div className="mb-4">
+                <label className="text-white/60 text-sm mb-2 block">
+                  Investment Amount
+                </label>
+                <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-xl">
                     €
                   </span>
                   <input
                     type="number"
-                    value={currentAllocation || ""}
-                    onChange={(e) => handleAllocationChange(e.target.value)}
+                    value={tempAmount}
+                    onChange={(e) => setTempAmount(e.target.value)}
                     placeholder="0"
-                    className="w-full bg-white/10 text-white text-2xl font-light pl-10 pr-4 py-4 rounded-xl border border-white/20 focus:border-cyan-400 focus:outline-none transition-all"
+                    className="w-full bg-white/10 text-white text-2xl font-light pl-10 pr-4 py-4 rounded-xl border border-white/20 focus:border-cyan-400 focus:outline-none"
                     min="0"
-                    max={remainingBudget + currentAllocation}
+                    max={
+                      remainingBudget + (allocations[selectedFounder.id] || 0)
+                    }
                   />
                 </div>
               </div>
 
-              {/* Quick Allocate Buttons */}
-              <div className="grid grid-cols-4 gap-2">
+              {/* Quick Amounts */}
+              <div className="grid grid-cols-4 gap-2 mb-4">
                 {[5000, 10000, 15000, 20000].map((amount) => (
-                  <motion.button
+                  <button
                     key={amount}
-                    onClick={() => quickAllocate(amount)}
-                    disabled={remainingBudget + currentAllocation < amount}
-                    className={`py-2 rounded-lg text-sm ${
-                      remainingBudget + currentAllocation >= amount
-                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50"
-                        : "bg-white/5 text-white/30 border border-white/10"
-                    }`}
-                    whileHover={{
-                      scale:
-                        remainingBudget + currentAllocation >= amount
-                          ? 1.05
-                          : 1,
-                    }}
-                    whileTap={{
-                      scale:
-                        remainingBudget + currentAllocation >= amount
-                          ? 0.95
-                          : 1,
-                    }}
+                    onClick={() => setTempAmount(amount.toString())}
+                    className="bg-cyan-500/20 text-cyan-300 py-2 rounded-lg text-sm border border-cyan-500/50"
                   >
-                    +€{amount / 1000}k
-                  </motion.button>
+                    €{amount / 1000}k
+                  </button>
                 ))}
               </div>
-            </div>
+
+              {/* Confirm Button */}
+              <motion.button
+                onClick={handleConfirmAmount}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl flex items-center justify-center space-x-2"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Check className="w-5 h-5" />
+                <span>Confirm Amount</span>
+              </motion.button>
+            </motion.div>
           </motion.div>
-        </AnimatePresence>
-
-        {/* Navigation Progress */}
-        <div className="flex justify-center space-x-2 mb-6">
-          {founders.map((founder, idx) => (
-            <motion.div
-              key={founder.id}
-              className={`h-2 rounded-full transition-all ${
-                idx === currentIndex
-                  ? "w-8 bg-gradient-to-r from-cyan-400 to-pink-500"
-                  : allocations[founder.id] > 0
-                  ? "w-2 bg-green-400"
-                  : "w-2 bg-white/20"
-              }`}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: idx * 0.1 }}
-            />
-          ))}
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className="flex space-x-3">
-          <motion.button
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-            className={`flex-1 py-4 rounded-xl flex items-center justify-center space-x-2 ${
-              currentIndex === 0
-                ? "bg-white/5 text-white/30"
-                : "bg-white/10 text-white border border-white/20"
-            }`}
-            whileHover={{ scale: currentIndex > 0 ? 1.02 : 1 }}
-            whileTap={{ scale: currentIndex > 0 ? 0.98 : 1 }}
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Previous</span>
-          </motion.button>
-
-          {currentIndex < founders.length - 1 ? (
-            <motion.button
-              onClick={handleNext}
-              className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-600 text-white py-4 rounded-xl flex items-center justify-center space-x-2"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span>Next</span>
-              <ArrowRight className="w-5 h-5" />
-            </motion.button>
-          ) : (
-            <motion.button
-              onClick={handleSubmit}
-              disabled={allocatedAmount !== totalBudget}
-              className={`flex-1 py-4 rounded-xl flex items-center justify-center space-x-2 ${
-                allocatedAmount === totalBudget
-                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
-                  : "bg-white/10 text-white/40 border border-white/20"
-              }`}
-              whileHover={{ scale: allocatedAmount === totalBudget ? 1.02 : 1 }}
-              whileTap={{ scale: allocatedAmount === totalBudget ? 0.98 : 1 }}
-            >
-              <Check className="w-5 h-5" />
-              <span>Cast Vote</span>
-            </motion.button>
-          )}
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 // Thank You Page Component
-function ThankYouPage({ allocations, founders, investorName }) {
+function ThankYouPage({ allocations, founders, investorName, voteCode }) {
+  const API_URL = "https://audience-choice-award-backend.vercel.app";
+
   const sortedAllocations = founders
     .map((founder) => ({
       ...founder,
@@ -547,6 +567,16 @@ function ThankYouPage({ allocations, founders, investorName }) {
         >
           <h1 className="text-4xl font-light text-white mb-3">Thank You!</h1>
           <p className="text-cyan-200 text-lg mb-2">{investorName}</p>
+          {voteCode && (
+            <div className="bg-cyan-500/20 border border-cyan-400/50 rounded-lg p-3 mb-3">
+              <p className="text-white/60 text-xs mb-1">
+                Your Vote Confirmation Code
+              </p>
+              <p className="text-cyan-300 text-xl font-mono font-semibold tracking-wider">
+                {voteCode}
+              </p>
+            </div>
+          )}
           <p className="text-white/60">Your vote has been recorded</p>
         </motion.div>
 
@@ -573,21 +603,19 @@ function ThankYouPage({ allocations, founders, investorName }) {
               >
                 <div className="flex items-center space-x-3">
                   <div
-                    className={`w-10 h-10 rounded-lg bg-gradient-to-br ${founder.color} flex items-center justify-center text-lg`}
+                    className={`w-10 h-10 rounded-lg bg-gradient-to-br ${founder.color} flex items-center justify-center`}
                   >
-                  {founder.logo ? (
-                    <img
-                      src={
-                        founder.logo.startsWith("http")
-                          ? founder.logo
-                          : `${API_URL}${founder.logo}`
-                      }
-                      alt={founder.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600" />
-                  )}
+                    {founder.logo && (
+                      <img
+                        src={
+                          founder.logo.startsWith("http")
+                            ? founder.logo
+                            : `${API_URL}${founder.logo}`
+                        }
+                        alt={founder.name}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    )}
                   </div>
                   <div>
                     <div className="text-white text-sm">{founder.company}</div>
