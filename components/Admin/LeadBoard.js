@@ -8,6 +8,8 @@ export default function Leaderboard() {
   const [results, setResults] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [countdown, setCountdown] = useState(null);
 
   // Fetch results from API
   const fetchResults = async () => {
@@ -42,28 +44,46 @@ export default function Leaderboard() {
     return () => clearInterval(interval);
   }, []);
 
+  // Countdown effect
+  useEffect(() => {
+    if (countdown === null) return;
+    
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setIsRevealed(true);
+      setCountdown(null);
+    }
+  }, [countdown]);
 
   const handleResetVotes = async () => {
-  if (!window.confirm('⚠️ Are you sure you want to delete ALL votes? This cannot be undone!')) {
-    return;
-  }
-
-  try {
-    const response = await fetch(`${API_URL}/api/reset-votes`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to reset votes');
+    if (!window.confirm('Are you sure you want to delete ALL votes? This cannot be undone!')) {
+      return;
     }
 
-    alert('All votes have been reset successfully!');
-    fetchResults(); 
-  } catch (error) {
-    console.error('Error resetting votes:', error);
-    alert('Failed to reset votes. Please try again.');
-  }
-};
+    try {
+      const response = await fetch(`${API_URL}/api/reset-votes`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reset votes');
+      }
+
+      alert('All votes have been reset successfully!');
+      setIsRevealed(false);
+      fetchResults(); 
+    } catch (error) {
+      console.error('Error resetting votes:', error);
+      alert('Failed to reset votes. Please try again.');
+    }
+  };
+
+  const handleReveal = () => {
+    setCountdown(5);
+  };
+
   // Get medal/crown icon based on position
   const getPositionIcon = (position) => {
     switch (position) {
@@ -228,7 +248,27 @@ export default function Leaderboard() {
         </motion.div>
 
         {/* Results */}
-        {totalVotes== 0 ? (
+        {countdown !== null ? (
+          // Countdown Screen
+          <motion.div
+            className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-3xl p-20 border border-white/20 text-center"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            <motion.div
+              key={countdown}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.5, opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h1 className="text-9xl font-light text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600">
+                {countdown}
+              </h1>
+            </motion.div>
+            <p className="text-white/60 text-2xl mt-8">Revealing winner...</p>
+          </motion.div>
+        ) : totalVotes === 0 ? (
           <motion.div
             className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-3xl p-12 border border-white/20 text-center"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -250,7 +290,103 @@ export default function Leaderboard() {
               Cast Your Vote
             </motion.button>
           </motion.div>
+        ) : !isRevealed ? (
+          // Trophy Screensaver Mode
+          <motion.div
+            className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-3xl p-12 border border-white/20"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="relative h-96 flex items-center justify-center">
+              {/* Central Trophy */}
+              <motion.div
+                className="relative z-10"
+                animate={{ 
+                  y: [0, -20, 0],
+                  rotateY: [0, 360]
+                }}
+                transition={{ 
+                  y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+                  rotateY: { duration: 8, repeat: Infinity, ease: "linear" }
+                }}
+              >
+                <Trophy className="w-32 h-32 text-yellow-400" />
+              </motion.div>
+
+              {/* Orbiting Logos */}
+              {results.map((founder, index) => {
+                const angle = (index / results.length) * Math.PI * 2;
+                const radius = 180;
+                return (
+                  <motion.div
+                    key={founder.id}
+                    className="absolute w-16 h-16 rounded-xl bg-white shadow-lg flex items-center justify-center"
+                    animate={{
+                      x: Math.cos(angle) * radius,
+                      y: Math.sin(angle) * radius,
+                      rotate: [0, 360]
+                    }}
+                    transition={{
+                      x: { duration: 10, repeat: Infinity, ease: "linear" },
+                      y: { duration: 10, repeat: Infinity, ease: "linear" },
+                      rotate: { duration: 8, repeat: Infinity, ease: "linear" }
+                    }}
+                    style={{
+                      left: '50%',
+                      top: '50%',
+                    }}
+                  >
+                    {founder.logo ? (
+                      <img
+                        src={founder.logo.startsWith('http') ? founder.logo : `${API_URL}${founder.logo}`}
+                        alt={founder.company}
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      <span className="text-2xl">{founder.company[0]}</span>
+                    )}
+                  </motion.div>
+                );
+              })}
+
+              {/* Pulsing Rings */}
+              {[...Array(3)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute border-2 border-cyan-400/30 rounded-full"
+                  style={{
+                    width: 150 + i * 100,
+                    height: 150 + i * 100,
+                  }}
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.3, 0.1, 0.3]
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    delay: i * 0.5
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Tension Text */}
+            <motion.div
+              className="text-center mt-12"
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <h2 className="text-4xl font-light text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600 mb-2">
+                Who Will Win?
+              </h2>
+              <p className="text-white/60 text-lg">
+                Votes are being counted...
+              </p>
+            </motion.div>
+          </motion.div>
         ) : (
+          // Revealed Leaderboard
           <div className="space-y-4">
             <AnimatePresence>
               {results.map((founder, index) => (
@@ -258,7 +394,7 @@ export default function Leaderboard() {
                   key={founder.id}
                   initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.3 }}
                   className={`bg-gradient-to-br ${getPositionStyles(index)} backdrop-blur-lg rounded-2xl p-6 border shadow-xl`}
                   layout
                 >
@@ -325,31 +461,45 @@ export default function Leaderboard() {
           </div>
         )}
 
-{/* Back Button & Reset */}
-<motion.div
-  className="flex justify-center items-center space-x-6 mt-8"
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ delay: 0.5 }}
->
-  <motion.button
-    onClick={() => window.location.href = '/'}
-    className="text-cyan-400 hover:text-cyan-300 underline"
-    whileHover={{ scale: 1.05 }}
-  >
-    Back to Voting
-  </motion.button>
+        {/* Back Button & Reset */}
+        <motion.div
+          className="flex justify-center items-center space-x-6 mt-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <motion.button
+            onClick={() => window.location.href = '/'}
+            className="text-cyan-400 hover:text-cyan-300 underline"
+            whileHover={{ scale: 1.05 }}
+          >
+            Back to Voting
+          </motion.button>
 
-  <motion.button
-    onClick={handleResetVotes}
-    className="bg-gradient-to-r from-red-500 to-red-700 text-white px-6 py-2 rounded-xl flex items-center space-x-2"
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-  >
-    <X className="w-4 h-4" />
-    <span>Reset All Votes</span>
-  </motion.button>
-</motion.div>
+          {!isRevealed && totalVotes > 0 && (
+            <motion.button
+              onClick={handleReveal}
+              className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white px-8 py-3 rounded-xl flex items-center space-x-2 font-semibold shadow-lg"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Trophy className="w-5 h-5" />
+              <span>REVEAL WINNER</span>
+            </motion.button>
+          )}
+
+          <motion.button
+            onClick={handleResetVotes}
+            className="bg-gradient-to-r from-red-500 to-red-700 text-white px-6 py-2 rounded-xl flex items-center space-x-2"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <X className="w-4 h-4" />
+            <span>Reset All Votes</span>
+          </motion.button>
+        </motion.div>
       </div>
     </div>
   );
