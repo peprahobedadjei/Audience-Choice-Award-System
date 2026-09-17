@@ -135,7 +135,7 @@ export default function DisruptLanding() {
           >
             <Calendar className="w-6 h-6 text-white" />
             <span className="text-white text-xl font-light tracking-wider">
-              Thu 16 October
+              Thu 24th Oct 2026
             </span>
           </motion.div>
         </motion.div>

@@ -180,7 +180,7 @@ export default function DisruptInfoPage() {
     <ul className="space-y-2 text-white text-sm">
       <li>1. <span className="text-white">Disrupt Dollars are virtual currency.</span> No real money involved!</li>
       <li>2. <span className="text-white">No personal data is collected.</span> Completely anonymous voting</li>
-      <li>3. <span className="text-white">Just for fun.</span> Help crown the audience favorite!</li>
+      <li>3. <span className="text-white"></span> Help crown the audience favorite!</li>
     </ul>
   </div>
 </motion.div>
